@@ -1,5 +1,6 @@
 import requests
-import pycurl
+# import pycurl
+import urllib3
 
 channels = {
     "AA": (0, 0),
@@ -98,11 +99,15 @@ class MeshClass:
             print("Invalid Arguments for Ports")
 
         else:
-            crl = pycurl.Curl()
-            command = f"http://{self.address}/:0{block}:CHAN:{channel}:ATT?"
-            crl.setopt(crl.URL, command)
-            crl.perform()
-            crl.close()
+            http = urllib3.PoolManager()
+            response = http.request(
+                'GET', f"http://{self.address}/:0{block}:CHAN:{channel}:ATT?")
+            print(response.data.decode('utf-8'))
+            # crl = pycurl.Curl()
+            # command = f"http://{self.address}/:0{block}:CHAN:{channel}:ATT?"
+            # crl.setopt(crl.URL, command)
+            # crl.perform()
+            # crl.close()
 
     def sweep_time(self, direct: int, units: str, time: int):
         """

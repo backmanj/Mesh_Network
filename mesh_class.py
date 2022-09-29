@@ -118,7 +118,7 @@ class MeshClass:
         """
         requests.get(f'http://{self.address}/:SWEEP:DIRECTION:{direct}')
         requests.get(f'http://{self.address}/:SWEEP:DWELL_UNIT:{units}')
-        requests.get(f'http://{self.address}/:SWEEP:DIRECTION:{direct}')
+        requests.get(f'http://{self.address}/:SWEEP:DWELL:{time}')
 
     def sweep_range(self, low: int, high: int):
         """
@@ -166,3 +166,59 @@ class MeshClass:
             This will stop the sweep.\n
         """
         requests.get(f'http://{self.address}/:SWEEP:MASTERMODE:OFF')
+
+    def hop_setup(self, points: int, direct: int):
+        """
+        hop_setup:
+            This will set the number of hop points and direction for hopping\n
+            It has two arguments: points, direct\n
+            points will determine how many points you have in your hopping sequence\n
+            direct will choose what direction you are hopping\n
+            Options are 0 for lowest index to highest index, 1 for highest index to lowest index, and 2 for bi-directional hopping\n
+            Example: hop_points(2,'S', 120) will run for 120 seconds and run from lowest to highest value\n
+        """
+        requests.get(f'http://{self.address}/:HOP:POINTS:{points}')
+        requests.get(f'http://{self.address}/:HOP:DIRECTION:{direct}')
+
+    def hop_point(self, point: int, units: str, time: int, atten: int, port1: str, port2: str):
+        """
+        hop_point:
+            This will set a point at a given index the units of time, time duration, attenuation and port connections\n
+            It has six arguments: point, units, time, atten, port1, port2\n
+            point will choose which index on your sequence of points that you will modify\n
+            units will determine what units of time it will use.\n
+            Options are 'U' for microseconds, 'M' for milliseconds and 'S' for seconds\n
+            time is an integer that will be determine the length in units how long the sweep will run\n
+            atten is the attenuation at this point in your hop sequence\n
+            port1 and port2 represent which ports you want to connect together\n
+            Example: hop_point(0, 'U', 600, 20, 'A', 'C') will modify my first point on my sequence to run for 600 microseconds with an\n
+            attenuation of 20 db on the connection between ports A and C\n
+        """
+        string = port1+port2
+        ports = channels[string]
+        block = ports[0]
+        channel = index[ports[1]]
+        if(ports[0] == 0):
+            print("Invalid Arguments for Ports")
+        requests.get(f'http://{self.address}/:HOP:POINT:{point}')
+        requests.get(f'http://{self.address}/:HOP:DWELL_UNIT:{units}')
+        requests.get(f'http://{self.address}/:HOP:DWELL:{time}')
+        requests.get(f'http://{self.address}/:HOP:ATT:{atten}')
+        requests.get(f'http://{self.address}/:HOP:NOOFCHANNELS:1')
+        requests.get(f'http://{self.address}/:HOP:CHANNEL_INDEX:0')
+        requests.get(
+            f'http://{self.address}/:HOP:CHANNEL_ADDRESS:0{block}{channel}')
+
+    def hop_start(self):
+        """
+        hop_start:
+            This will start the hopping. It will run indefinitely until stopped\n
+        """
+        requests.get(f'http://{self.address}/:HOP:MASTERMODE:ON')
+
+    def hop_stop(self):
+        """
+        sweep_start:
+            This will stop the sweeping.\n
+        """
+        requests.get(f'http://{self.address}/:HOP:MASTERMODE:OFF')

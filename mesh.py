@@ -10,7 +10,7 @@ mesh = MeshClass("192.168.0.66")
 #   They have been split up for convenience
 #
 #
-#   hop_setup, hop_point_time, hop_point_atten, hop_point_address, hop_start, hop_stop
+#   hop_points, hop_point_time, hop_point_atten, hop_point_address, hop_start, hop_stop
 #
 #
 #

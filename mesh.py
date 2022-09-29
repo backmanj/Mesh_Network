@@ -16,8 +16,8 @@ mesh = MeshClass("192.168.0.66")
 #
 #
 
-# mesh.set_att('A', 'F', 35)
-mesh.check_att('B', 'D')
+mesh.set_att('E', 'B', 35)
+mesh.check_att('E', 'B')
 # mesh.sweep_time(0, 'M', 300)
 # mesh.sweep_range(0, 65)
 # mesh.sweep_address('F', 'A')

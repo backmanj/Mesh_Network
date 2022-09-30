@@ -51,6 +51,21 @@ index = {
 
 class MeshClass:
     def __init__(self, address):
+        """
+        MeshClass uses python libraries requests and urllib3 to make http commands
+
+        Functions in this class:\n
+            set_att\n
+            check_att\n
+            sweep_setup\n
+            sweep_config\n
+            sweep_start\n
+            sweep_stop\n
+            hop_setup\n
+            hop_point_config\n
+            hop_start\n
+            hop_stop\n
+        """
         self.address = address
 
     def set_att(self, port1: str, port2: str, atten: int):
@@ -62,7 +77,7 @@ class MeshClass:
             Example: set_att('B','D', 50) will set attenuation for the connection between port B and port D to 50\n
             Using the function set_att('B','D', 50) and set_att('D', 'B', 50) will give you the same results\n
             If port1 and port2 arguments are the same, you will get an error\n
-            atten is any number between 0-95 db\n
+            atten is any number between 0-95 db
         """
         string = port1+port2
         ports = channels[string]
@@ -88,7 +103,7 @@ class MeshClass:
             Using check_att('B', 'D') and check_att('D', B') will give you the same results\n
             If port1 and port2 arguments are the same, you will get an error\n
             The results are returned by the http command and will include the attenuator block\n
-            Example of results: 01:30.0 this is showing that on the first attenuator block the attenuation is 30 db\n
+            Example of results: 01:30.0 this is showing that on the first attenuator block the attenuation is 30 db
         """
         string = port1+port2
         ports = channels[string]
@@ -104,42 +119,30 @@ class MeshClass:
                 'GET', f"http://{self.address}/:0{block}:CHAN:{channel}:ATT?")
             print(response.data.decode('utf-8'))
 
-    def sweep_time(self, direct: int, units: str, time: int):
+    def sweep_setup(self, direct: int):
         """
-        sweep_time:
-            This will set the time and direction for a sweep function to perform\n
-            It has three arguments: direct, units, time\n
+        sweep_setup:
+            This will set the direction of your sweep function\n
+            It has one argument: direct\n
             direct will choose what direction you are sweeping\n
             Options are 0 for lowest to highest value, 1 for highest to lowest, and 2 for bi-directional sweep--a sweep forward and then backwards\n
-            units will determine what units of time it will use.\n
-            Options are 'U' for microseconds, 'M' for milliseconds and 'S' for seconds\n
-            time is an integer that will be determine the length in units how long the sweep will run\n
-            Example: sweep_time(0,'S', 120) will run for 120 seconds and run from lowest to highest value\n
+            Example: sweep_setup(0) this will set your sweep to go from lowest to highest value
         """
         requests.get(f'http://{self.address}/:SWEEP:DIRECTION:{direct}')
-        requests.get(f'http://{self.address}/:SWEEP:DWELL_UNIT:{units}')
-        requests.get(f'http://{self.address}/:SWEEP:DWELL:{time}')
 
-    def sweep_range(self, low: int, high: int):
+    def sweep_config(self, units: str, time: int, low: int, high: int, step: float, port1: str, port2: str):
         """
-        sweep_range:
-            This will allow you to choose what range of attenuation you want to sweep\n
-            It needs two arguments: low, high\n
+        sweep_config:
+            This will set the time and units, the range and the ports for the sweep function\n
+            It has six arguments: units, time, low, high, port1, port2\n
+            units will determine what units of time it will use.\n
+            Options are 'U' for microseconds, 'M' for milliseconds and 'S' for seconds\n
+            time is an integer that will be determine the length in units how long till it takes the next step\n
+            The maximum time in 'S' is 4. Its kind of jank but that's been my experience with it\n
+            step is the stepsize for your sweeping function in db.\n
             low determines your lowest value on your sweep. high determines your highest value on your sweep\n
-            Example: sweep_range(0, 50) will set my lowest attenuation value to 0 db and my highest attenuation value to 50 db\n
-        """
-        requests.get(f'http://{self.address}/:SWEEP:START:{low}')
-        requests.get(f'http://{self.address}/:SWEEP:STOP:{high}')
-
-    def sweep_address(self, port1: str, port2: str):
-        """
-        sweep_address:
-            This will let you choose which port connections you would like to sweep. The class is only designed to do one connection at a time\n
-            It needs two arguments: port1, port2\n
             port1 and port2 represent which ports you want to connect together\n
-            Example: sweep_address('B', 'D') will sweep the attenuation between port B and port D\n
-            Using sweep_address('B', 'D') and sweep_address('D', B') will give you the same results\n
-            If port1 and port2 arguments are the same, you will get an error\n
+            Example: sweep_run('M', 300, 10, 50, 0.5, 'C', 'E') will run a sweep for 300 mils from 10 db to 50 db with 0.5 db stepsize on ports C and E
         """
         string = port1+port2
         ports = channels[string]
@@ -148,6 +151,11 @@ class MeshClass:
         if(ports[0] == 0):
             print("Invalid Arguments for Ports")
         else:
+            requests.get(f'http://{self.address}/:SWEEP:DWELL_UNIT:{units}')
+            requests.get(f'http://{self.address}/:SWEEP:DWELL:{time}')
+            requests.get(f'http://{self.address}/:SWEEP:START:{low}')
+            requests.get(f'http://{self.address}/:SWEEP:STOP:{high}')
+            requests.get(f'http://{self.address}/:SWEEP:STEPSIZE:{step}')
             requests.get(f'http://{self.address}/:SWEEP:NOOFCHANNELS:1')
             requests.get(f'http://{self.address}/:SWEEP:CHANNEL_INDEX:0')
             requests.get(
@@ -180,7 +188,7 @@ class MeshClass:
         requests.get(f'http://{self.address}/:HOP:POINTS:{points}')
         requests.get(f'http://{self.address}/:HOP:DIRECTION:{direct}')
 
-    def hop_point(self, point: int, units: str, time: int, atten: int, port1: str, port2: str):
+    def hop_point_config(self, point: int, units: str, time: int, atten: int, port1: str, port2: str):
         """
         hop_point:
             This will set a point at a given index the units of time, time duration, attenuation and port connections\n
@@ -188,7 +196,8 @@ class MeshClass:
             point will choose which index on your sequence of points that you will modify\n
             units will determine what units of time it will use.\n
             Options are 'U' for microseconds, 'M' for milliseconds and 'S' for seconds\n
-            time is an integer that will be determine the length in units how long the sweep will run\n
+            time is an integer that will be determine the length in units how long it will dwell on one point\n
+            The maximum time in 'S' is 4. Its kind of jank but that's been my experience with it\n
             atten is the attenuation at this point in your hop sequence\n
             port1 and port2 represent which ports you want to connect together\n
             Example: hop_point(0, 'U', 600, 20, 'A', 'C') will modify my first point on my sequence to run for 600 microseconds with an\n
